@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "504098165701",
+    "firebase_url": "https://fir-startup-4cd98.firebaseio.com",
+    "project_id": "fir-startup-4cd98",
+    "storage_bucket": "fir-startup-4cd98.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:504098165701:android:4fe1836fb80fc03c",
+        "android_client_info": {
+          "package_name": "com.example.waleed.firebasestartup"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "504098165701-vdc2c46r80oig8jcirsc0c1hc6u1qu1u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJCb6KQRorVKXTuEQj1xSNhz4c9cRLmo4"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
