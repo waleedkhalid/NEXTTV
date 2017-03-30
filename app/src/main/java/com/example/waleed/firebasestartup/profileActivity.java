@@ -2,8 +2,10 @@ package com.example.waleed.firebasestartup;
 
 import android.app.LauncherActivity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
+import android.media.Image;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
@@ -14,12 +16,14 @@ import android.view.View;
 import android.widget.Adapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 
 import com.firebase.ui.database.FirebaseListAdapter;
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
@@ -28,6 +32,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,20 +43,34 @@ import java.util.List;
 
 public class profileActivity extends AppCompatActivity implements TextView.OnClickListener {
 
-    private static final String URL_Data = "https://www.internetfaqs.net/superheroes.php";
 
+    public static class RoomViewHolder extends RecyclerView.ViewHolder {
+        public TextView roomName;
+        public TextView roomAddress;
+        public TextView roomUrl;
+        public ImageView ThumbUrl;
+
+
+        public RoomViewHolder(View v) {
+            super(v);
+            roomName = (TextView) itemView.findViewById(R.id.name);
+            roomAddress = (TextView) itemView.findViewById(R.id.address);
+            roomUrl = (TextView) itemView.findViewById(R.id.Movieurl);
+            ThumbUrl = (ImageView) itemView.findViewById(R.id.ThumbUrl);
+
+        }
+    }
+    public static final String ROOMS = "Movies";
+    private RecyclerView mRoomRecyclerView;
+    private LinearLayoutManager mLinearLayoutManager;
     private FirebaseAuth firebaseAuth;
     private TextView textViewUserEmail;
     private Button buttonLogOut;
-    private ListView mlistview;
+    public Context context=this;
+    private DatabaseReference mFirebaseDatabaseReference;
+    private FirebaseRecyclerAdapter<EscapeRoom, RoomViewHolder> mFirebaseAdapter;
+    private ProgressDialog progressDialog;
 
-    private DatabaseReference databaseReference;
-//    private EditText  editTextName, editTextAddress;
-//    private Button buttonSave;
-
-    private RecyclerView recyclerView;
-    private RecyclerView.Adapter adapter;
-    private List<ListItem> listItems;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -62,17 +81,47 @@ public class profileActivity extends AppCompatActivity implements TextView.OnCli
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
+        mRoomRecyclerView = (RecyclerView)findViewById(R.id.roomRecyclerView);
+        mLinearLayoutManager = new LinearLayoutManager(this,LinearLayoutManager.HORIZONTAL, false);
+        mLinearLayoutManager.setStackFromEnd(true);
 
-        recyclerView = (RecyclerView) findViewById(R.id.recyclerview);
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReferenceFromUrl("https://fir-startup-4cd98.firebaseio.com/Movies");
 
-        listItems = new ArrayList<>();
+        progressDialog= ProgressDialog.show(this, "Loading...","Please Wait",true);
+        //Database Initialization
+        mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
+        mFirebaseAdapter = new FirebaseRecyclerAdapter<EscapeRoom, RoomViewHolder>(
+                EscapeRoom.class,
+                R.layout.escape_room,
+                RoomViewHolder.class,
+                mFirebaseDatabaseReference.child(ROOMS)) {
+            @Override
 
-        adapter = new MyAdapter(listItems, this);
+            protected void populateViewHolder(RoomViewHolder viewHolder, EscapeRoom model, int position) {
 
-        recyclerView.setAdapter(adapter);
+//                viewHolder.roomName.setText(model.getTitle());
+//                viewHolder.roomAddress.setText(model.getDirector());
+//                viewHolder.roomUrl.setText(model.getMovieUrl());
+                Picasso.with(context).load(model.getThumbUrl()).into(viewHolder.ThumbUrl);
+
+            progressDialog.dismiss();
+            }
+
+        };
+        mFirebaseAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver(){
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount){
+                super.onItemRangeInserted(positionStart, itemCount);
+                int roomCount = mFirebaseAdapter.getItemCount();
+                int lastVisiblePosition = mLinearLayoutManager.findLastCompletelyVisibleItemPosition();
+                if (lastVisiblePosition == -1 || (positionStart >= (roomCount -1) && lastVisiblePosition == (positionStart -1))){
+                    mRoomRecyclerView.scrollToPosition(positionStart);
+                }
+            }
+        });
+        mRoomRecyclerView.setLayoutManager(mLinearLayoutManager);
+        mRoomRecyclerView.setAdapter(mFirebaseAdapter);
+
+
 
         LoadRecyclerViewData();
 
@@ -116,40 +165,12 @@ public class profileActivity extends AppCompatActivity implements TextView.OnCli
 
         database = FirebaseDatabase.getInstance();
 
-//        getReference();
-
-//        editTextAddress = (EditText) findViewById(R.id.editTextAddress);
-//        editTextName = (EditText) findViewById(R.id.editTextName);
-//        buttonSave = (Button) findViewById(R.id.buttonSave);
-
-
-
-
 
     }
-//    private void saveUserInformation()
-//    {
-//
-////    String name = editTextName.getText().toString().trim();
-//    String add = editTextAddress.getText().toString().trim();
-//
-//        UserInformation userInformation = new UserInformation(name, add);
-//
-//        FirebaseUser User = firebaseAuth.getCurrentUser();
-//         databaseReference.child(User.getUid()).setValue(userInformation);
-//
-//        Toast.makeText(this, "Information saved", Toast.LENGTH_LONG).show();
-//
-//
-//    }
-
 
 //  Read from Database
 
     FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference myRef = database.getReference("Movies");
-
-//    myRef.addValueEventListner(new ValueEvnetListner);
 
 
     @Override
